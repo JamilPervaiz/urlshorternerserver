@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Test for url shortener task</title>
+  </head>
+  <body>
+    <h2>URLShortener task</h2>
+    <input type="text" id="urlInput" placeholder="Please enter URL" />
+    <button onclick="makeShortUrls()">Click to Shorten URL</button>
+    <p id="yourInputshortened"></p>
+
+    <script>
+      const ws = new WebSocket("ws://localhost:3000");
+      let wsOpen = false;
+
+      ws.onopen = () => {
+        wsOpen = true;
+        console.log("Socket connected");
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        const UpdatedNewURL = data.shortenedURL;
+        document.getElementById("yourInputshortened").innerHTML = `
+        Your Shortened URL is <a href="${UpdatedNewURL}" target="_blank">${UpdatedNewURL}</a>
+      `;
+
+        // Acknowledge receipt back to server
+        const code = UpdatedNewURL.split("/").pop();
+        ws.send(JSON.stringify({ ack: code }));
+      };
+
+      function makeShortUrls() {
+        const url = document.getElementById("urlInput").value;
+        fetch("/url", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ url }),
+        }).then((res) => {
+          if (res.ok) {
+            console.log("URL Added successfully");
+          } else {
+            alert("Unable to shortening URL");
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
